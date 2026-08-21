@@ -1,31 +1,35 @@
 import json
 import numpy
+import os
 
-vectors = []
-labels = []
-
-with open("../data/collected_matches/matches.json", "r") as f: 
-	for line in f:
-		match = json.loads(line)
-		v = [0] * 127
-
-		for hero_id in match["radiant_draft"]:
-			v[hero_id] = 1
-
-		for hero_id in match["dire_draft"]:
-			v[hero_id] = -1
+DATA_DIR = os.path.join(os.path.dirname(__file__), "../data/collected_matches")
 
 
-		v.append(1)
-		vectors.append(v)
-		labels.append(1 if match["radiant_win"] else 0)
+def run():
+	vectors = []
+	labels = []
 
+	with open(os.path.join(DATA_DIR, "matches.json"), "r") as f:
+		for line in f:
+			match = json.loads(line)
+			v = [0] * 156
 
-X = numpy.array(vectors)
-Y = numpy.array(labels)
+			for hero_id in match["radiant_draft"]:
+				v[hero_id] = 1
 
-print(Y)
+			for hero_id in match["dire_draft"]:
+				v[hero_id] = -1
 
-numpy.save("../data/collected_matches/X.npy", X)
-numpy.save("../data/collected_matches/Y.npy", Y)
-print(f"Saved X{X.shape} Y{Y.shape}")
+			v.append(1)
+			vectors.append(v)
+			labels.append(1 if match["radiant_win"] else 0)
+
+	X = numpy.array(vectors)
+	Y = numpy.array(labels)
+
+	numpy.save(os.path.join(DATA_DIR, "X.npy"), X)
+	numpy.save(os.path.join(DATA_DIR, "Y.npy"), Y)
+	print(f"Saved X{X.shape} Y{Y.shape}")
+	
+if __name__ == "__main__":
+    run()

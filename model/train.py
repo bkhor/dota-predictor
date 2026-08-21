@@ -1,10 +1,9 @@
-import numpy 
+import numpy
+import os
 
-weights = numpy.zeros(128)
-X = numpy.load("../data/collected_matches/X.npy")
-Y = numpy.load("../data/collected_matches/Y.npy")
+DATA_DIR = os.path.join(os.path.dirname(__file__), "../data/collected_matches")
 
-learning_rate = 0.1
+learning_rate = 1.0
 hard_prediction_threshold = 0.5
 epochs = 1000
 
@@ -34,17 +33,32 @@ def update_weights(weights, gradient, learning_rate):
 def to_hard_predictions(Y_predicted):
 	return (Y_predicted >= hard_prediction_threshold).astype(int)
 
-def train(X, Y, weights, learning_rate, epochs):
-	for epoch in range(epochs):
-		Y_hat = prediction(X, weights)
-		loss = binary_cross_entropy(Y, Y_hat)
-		gradient = compute_gradient(X, Y, Y_hat)
-		weights = update_weights(weights, gradient, learning_rate)
-		if epoch % 10 == 0:
-			print(f"Epoch {epoch} loss: {loss:.4f}")
-	return weights
+def train(X, Y, weights, learning_rate, epochs, batch_size=128):
+    n = len(X)
+    for epoch in range(epochs):
+        indices = numpy.random.permutation(n)
+        X_shuffled = X[indices]
+        Y_shuffled = Y[indices]
 
-if __name__ == "__main__":
+        for i in range(0, n, batch_size):
+            X_batch = X_shuffled[i:i+batch_size]
+            Y_batch = Y_shuffled[i:i+batch_size]
+
+            Y_hat = prediction(X_batch, weights)
+            gradient = compute_gradient(X_batch, Y_batch, Y_hat)
+            weights = update_weights(weights, gradient, learning_rate)
+
+        if epoch % 100 == 0:
+            loss = binary_cross_entropy(Y, prediction(X, weights))
+            print(f"Epoch {epoch} loss: {loss:.4f}")
+
+    return weights
+
+def run():
+	X = numpy.load(os.path.join(DATA_DIR, "X.npy"))
+	Y = numpy.load(os.path.join(DATA_DIR, "Y.npy"))
+	weights = numpy.zeros(X.shape[1])
+
 	split = int(0.8 * len(X))
 	X_train, X_test = X[:split], X[split:]
 	Y_train, Y_test = Y[:split], Y[split:]
@@ -55,4 +69,8 @@ if __name__ == "__main__":
 	hard = to_hard_predictions(Y_hat)
 	accuracy = numpy.mean(hard == Y_test)
 	print(f"Test accuracy: {accuracy:.4f}")
+
+
+if __name__ == "__main__":
+    run()
 
