@@ -10,6 +10,8 @@ To run:
 
 Updates:
 
+*August 24*: Migrated from storing data in JSON format, to sqlite3 for deduplication, easy to resume collection, query without loading into memory. Also, migrated from OpenDota API, directly to Steam Web API - no daily cap. I just looked at how [OpenDota API](https://github.com/odota/core) does it, and implemented it similarly. 
+
 *August 21-23rd*: Fetching match data using OpenDota API and utilizing logistic regression to train the model, based on picks and match outcome. 
 
 *Issues*: 
