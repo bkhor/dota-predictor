@@ -1,39 +1,49 @@
 import requests
 from dataclasses import dataclass
-import json
 import os
 import time
+from dotenv import load_dotenv
+from db import init_db, insert_match, get_last_seq_num
 
-BASE_OPENDOTA_EXPLORER_API_URL = "https://api.opendota.com/api/explorer"
-OUTPUT_FOLDER = os.path.join(os.path.dirname(__file__), "collected_matches")
-SEEN_IDS_PATH = os.path.join(OUTPUT_FOLDER, "seen_ids.txt")
-LAST_ID_PATH = os.path.join(OUTPUT_FOLDER, "last_match_id.txt")
+load_dotenv(os.path.join(os.path.dirname(__file__), "../.env"))
+STEAM_API_KEY = os.getenv("STEAM_API_KEY")
 
+STEAM_API_URL = "https://api.steampowered.com/IDOTA2Match_570/GetMatchHistoryBySequenceNum/V001/"
+INITIAL_SEQ_NUM = 6700000000  #2024ish 
 
 @dataclass
 class Match:
+	match_id: int
+	seq_num: int
 	radiant_win: bool
+	start_time: int
 	radiant_draft: list
 	dire_draft: list
 
 
-def fetch_batch(less_than_match_id):
-	sql = f"""
-        SELECT match_id, radiant_win, picks_bans
-        FROM matches
-        WHERE picks_bans IS NOT NULL
-        AND match_id < {less_than_match_id}
-        ORDER BY match_id DESC
-        LIMIT 1000
-    """
-	response = requests.get(BASE_OPENDOTA_EXPLORER_API_URL, params={"sql": sql})
-	response.raise_for_status()
-	data = response.json()
-	return data["rows"]
+def fetch_batch(seq_num, batch_size=100):
+	params = {
+		"key": STEAM_API_KEY,
+		"start_at_match_seq_num": seq_num,
+		"matches_requested": batch_size
+	}
+	for attempt in range(5):
+		response = requests.get(STEAM_API_URL, params=params)
+		if response.status_code == 429:
+			wait = 2 ** attempt * 5
+			print(f"Rate limited. Waiting {wait}s...")
+			time.sleep(wait)
+			continue
+		response.raise_for_status()
+		return response.json()["result"]["matches"]
+	raise RuntimeError("Failed after 5 retries")
 
 
-def parse_match(row):
-	picks = [p for p in row["picks_bans"] if p["is_pick"]]
+def parse_match(raw):
+	if not raw.get("picks_bans"):
+		return None
+
+	picks = [p for p in raw["picks_bans"] if p["is_pick"]]
 	radiant_picks = [p["hero_id"] for p in picks if p["team"] == 0]
 	dire_picks = [p["hero_id"] for p in picks if p["team"] == 1]
 
@@ -41,82 +51,42 @@ def parse_match(row):
 		return None
 
 	return Match(
-		radiant_win=row["radiant_win"],
+		match_id=raw["match_id"],
+		seq_num=raw["match_seq_num"],
+		radiant_win=raw["radiant_win"],
+		start_time=raw["start_time"],
 		radiant_draft=radiant_picks,
 		dire_draft=dire_picks
 	)
 
 
-def parse_batch(rows):
-	matches = []
-	for row in rows:
-		match = parse_match(row)
-		if match is not None:
-			matches.append(match)
-	return matches
-
-
-def to_json(matches):
-	path = f"{OUTPUT_FOLDER}/matches.json"
-	with open(path, "a") as f:
-		for match in matches:
-			f.write(json.dumps({
-				"radiant_win": match.radiant_win,
-				"radiant_draft": match.radiant_draft,
-				"dire_draft": match.dire_draft
-			}) + "\n")
-
-
-def load_seen_ids():
-	if not os.path.exists(SEEN_IDS_PATH):
-		return set()
-	with open(SEEN_IDS_PATH) as f:
-		return set(int(line.strip()) for line in f)
-
-
-def save_seen_ids(ids):
-	with open(SEEN_IDS_PATH, "a") as f:
-		for id in ids:
-			f.write(str(id) + "\n")
-
-
-def load_last_match_id():
-	if not os.path.exists(LAST_ID_PATH):
-		return 999999999999
-	with open(LAST_ID_PATH) as f:
-		return int(f.read().strip())
-
-
-def save_last_match_id(match_id):
-	with open(LAST_ID_PATH, "w") as f:
-		f.write(str(match_id))
-
-
-MIN_MATCH_ID = 6000000000  # matches from ~2021 onwards
-
-def run(target=1000000):
-	seen_ids = load_seen_ids()
-	less_than_match_id = load_last_match_id()
+def run(target=100000):
+	init_db()
+	seq_num = get_last_seq_num() or INITIAL_SEQ_NUM
 	total = 0
 
 	while total < target:
-		if less_than_match_id < MIN_MATCH_ID:
-			print("Reached minimum match ID limit")
-			break
-		rows = fetch_batch(less_than_match_id)
+		rows = fetch_batch(seq_num)
 		if not rows:
 			break
 
-		new_rows = [r for r in rows if r["match_id"] not in seen_ids]
-		matches = parse_batch(new_rows)
-		to_json(matches)
+		for raw in rows:
+			match = parse_match(raw)
+			if match:
+				insert_match(
+					match.match_id,
+					match.seq_num,
+					match.radiant_win,
+					match.start_time,
+					match.radiant_draft,
+					match.dire_draft
+				)
+				total += 1
 
-		new_ids = [r["match_id"] for r in new_rows]
-		seen_ids.update(new_ids)
-		save_seen_ids(new_ids)
+		seq_num = max(r["match_seq_num"] for r in rows) + 1
+		print(f"Collected {total}/{target} | seq_num: {seq_num}")
+		time.sleep(2)
 
-		total += len(matches)
-		less_than_match_id = min(r["match_id"] for r in rows)
-		save_last_match_id(less_than_match_id)
-		print(f"Collected {total}/{target}")
-		time.sleep(1)
+
+if __name__ == "__main__":
+	run()
