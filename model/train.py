@@ -1,5 +1,6 @@
-import numpy
 import os
+
+import numpy
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "../data/collected_matches")
 

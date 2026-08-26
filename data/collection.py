@@ -1,9 +1,10 @@
-import requests
-from dataclasses import dataclass
 import os
 import time
+from dataclasses import dataclass
+
+import requests
+from db import get_last_seq_num, init_db, insert_match
 from dotenv import load_dotenv
-from db import init_db, insert_match, get_last_seq_num
 
 load_dotenv(os.path.join(os.path.dirname(__file__), "../.env"))
 STEAM_API_KEY = os.getenv("STEAM_API_KEY")

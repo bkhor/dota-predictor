@@ -1,6 +1,6 @@
-import sqlite3
 import json
 import os
+import sqlite3
 
 DB_PATH = os.path.join(os.path.dirname(__file__), "matches.db")
 
