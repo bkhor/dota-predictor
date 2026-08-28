@@ -1,5 +1,7 @@
 **Dota 2 match victory predictor**
 
+![Model Accuracy](https://img.shields.io/badge/dynamic/json?url=https://raw.githubusercontent.com/bkhor/dota-predictor/main/metrics.json&query=$.accuracy&label=accuracy&suffix=%25&color=blue)
+
 This is a project where I attempt to implement ML models from scratch, with the minimal use of any frameworks. I avoid using existing ML frameworks for now - scikit-learn, JAX, PyTorch, and TensorFlow to learn the mathematical foudnation of every step of model training.
 Currently, the only dependency that this project has is NumPy.
 

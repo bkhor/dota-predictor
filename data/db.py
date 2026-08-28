@@ -44,6 +44,15 @@ def init_db():
 		)
 	""")
 
+	#patch notes + timestamps for patch assignment and future featurization
+	cursor.execute("""
+		CREATE TABLE IF NOT EXISTS patches (
+			version TEXT PRIMARY KEY,
+			timestamp INTEGER,
+			data TEXT
+		)
+	""")
+
 	commit_and_close(connection)
 
 
