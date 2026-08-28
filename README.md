@@ -14,7 +14,7 @@ To run:
 
 Updates:
 
-*August 25-27*: After collecting 100k matches, match augmentation, Adam optimization, appending hero feature vector with winrates - the logistic regression seems to have hit its ceiling of 0.5606 accuracy. The loss is almost exactly $ln(2)$ - 0.6801 - which shows that in public Dota matches - pick rarely matters, and it's more about individual skill, than anything"
+*August 25-27*: After collecting 100k matches, match augmentation, Adam optimization, appending hero feature vector with winrates - the logistic regression seems to have hit its ceiling of 0.5606 accuracy. The loss is almost exactly $ln(2)$ - 0.6801 - which shows that in public Dota matches - pick rarely matters, and it's more about individual skill, than anything.
 
 *August 24*: Migrated from storing data in JSON format, to sqlite3 for deduplication, easy to resume collection, query without loading into memory. Also, migrated from OpenDota API, directly to Steam Web API - no daily cap. I just looked at how [OpenDota API](https://github.com/odota/core) does it, and implemented it similarly. 
 
