@@ -6,10 +6,11 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "../feature"))
 sys.path.append(os.path.join(os.path.dirname(__file__), "../model"))
 
 import collection
-import feature
 import logistic_regression
 import patches
 import winrates
+
+import feature
 
 if __name__ == "__main__":
     print("=== Collecting ===")

@@ -6,6 +6,7 @@ import requests
 sys.path.append(os.path.dirname(__file__))
 from db import get_connection
 
+
 def fetch_opendota_winrates():
     heroes = requests.get("https://api.opendota.com/api/heroStats").json()
     winrates = {}
