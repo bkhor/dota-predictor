@@ -7,3 +7,5 @@ opendotadocs.txt
 .env
 data/matches.db
 data/processed/
+model/visualize.py
+plots/

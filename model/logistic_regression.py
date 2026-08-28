@@ -50,7 +50,9 @@ def to_hard_predictions(Y_predicted):
 
 def train(X, Y, weights, learning_rate, epochs, m, v, batch_size=128):
     n = len(X)
-    t = 0                          
+    t = 0
+    losses = []
+
     for epoch in range(epochs):
         indices = numpy.random.permutation(n)
         X_shuffled = X[indices]
@@ -73,10 +75,11 @@ def train(X, Y, weights, learning_rate, epochs, m, v, batch_size=128):
             weights = update_weights(weights, gradient, learning_rate, m_hat, v_hat)
 
         if epoch % 10 == 0:
-            loss = binary_cross_entropy(Y, prediction(X, weights))
+            loss = float(binary_cross_entropy(Y, prediction(X, weights)))
+            losses.append({"epoch": epoch, "loss": round(loss, 6)})
             print(f"Epoch {epoch} loss: {loss:.4f}")
 
-    return weights, m, v
+    return weights, m, v, losses
 
 
 def run():
@@ -97,7 +100,7 @@ def run():
     X_train, X_test = X[:split], X[split:]
     Y_train, Y_test = Y[:split], Y[split:]
 
-    trained_weights, m, v = train(X_train, Y_train, weights, learning_rate, epochs, m, v)
+    trained_weights, m, v, losses = train(X_train, Y_train, weights, learning_rate, epochs, m, v)
 
     numpy.save(WEIGHTS_PATH, trained_weights)
     numpy.save(MOMENTUM_PATH, m)
@@ -105,11 +108,21 @@ def run():
     print("Saved weights and Adam state")
 
     Y_hat = prediction(X_test, trained_weights)
-    accuracy = float(numpy.mean(to_hard_predictions(Y_hat) == Y_test))
+    hard = to_hard_predictions(Y_hat)
+    accuracy = float(numpy.mean(hard == Y_test))
     print(f"Test accuracy: {accuracy:.4f}")
 
+    TP = int(numpy.sum((hard == 1) & (Y_test == 1)))
+    TN = int(numpy.sum((hard == 0) & (Y_test == 0)))
+    FP = int(numpy.sum((hard == 1) & (Y_test == 0)))
+    FN = int(numpy.sum((hard == 0) & (Y_test == 1)))
+
     with open(METRICS_PATH, "w") as f:
-        json.dump({"accuracy": round(accuracy, 4)}, f)
+        json.dump({
+            "accuracy": round(accuracy, 4),
+            "confusion_matrix": {"TP": TP, "TN": TN, "FP": FP, "FN": FN},
+            "losses": losses,
+        }, f)
     print(f"Saved metrics to {METRICS_PATH}")
 
 
