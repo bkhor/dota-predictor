@@ -61,10 +61,21 @@ def parse_match(raw):
 	)
 
 
+def get_match_count():
+	from db import get_connection
+	connection = get_connection()
+	cursor = connection.cursor()
+	cursor.execute("SELECT COUNT(*) FROM matches")
+	count = cursor.fetchone()[0]
+	connection.close()
+	return count
+
+
 def run(target=100000):
 	init_db()
 	seq_num = get_last_seq_num() or INITIAL_SEQ_NUM
-	total = 0
+	total = get_match_count()
+	print(f"Resuming from {total} existing matches")
 
 	while total < target:
 		rows = fetch_batch(seq_num)

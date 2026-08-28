@@ -44,10 +44,21 @@ def assign_patches():
     print("Patch assignment done")
 
 
+def already_fetched(version):
+    connection = get_connection()
+    cursor = connection.cursor()
+    cursor.execute("SELECT 1 FROM patches WHERE version = ?", (version,))
+    exists = cursor.fetchone() is not None
+    connection.close()
+    return exists
+
+
 def run():
     init_db()
     versions = fetch_all_versions()
     for version, timestamp in versions:
+        if already_fetched(version):
+            continue
         notes = fetch_notes(version)
         insert_patch(version, timestamp, notes)
         print(f"Fetched {version}")
