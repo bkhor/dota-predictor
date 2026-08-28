@@ -10,7 +10,25 @@ To run:
    
    `STEAM_API_KEY=1234567890ABCDEF`
 
-2. Run `pipeline/pipeline.py` for collection of data, feature engineering, and training. 
+2. Run `pipeline/pipeline.py` for collection of data, feature engineering, and training.
+
+
+Current State: 
+
+<img width="400" alt="confusion_matrix" src="https://github.com/user-attachments/assets/8c77fa48-797f-49dc-9817-da341ebcbf16" />
+
+Confusion matrix shows that the model is non-biased (expected given data augmentation).
+
+<img width="400"  alt="weight_distribution" src="https://github.com/user-attachments/assets/d023072f-1da6-4f28-b781-3e11885be7de" />
+
+Most heroes have zero-weight in public matches. Only a few heroes have non-zero weight, ultimately proving that player skill matters more than hero strength.
+
+<img width="500"  alt="winrate_vs_weight" src="https://github.com/user-attachments/assets/7619ea7a-7faa-47ec-90a7-94e46a3275d4" />
+
+Strong correlation between hero winrate and model weight. The model essentially learned winrate from draft data.
+
+*Next Steps*:
+Since the model has reached its ceiling with logistic regression - the next step is a deep learning model with hero embeddings and patch-aware features.
 
 Updates:
 
