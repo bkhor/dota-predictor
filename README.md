@@ -27,10 +27,16 @@ Most heroes have zero-weight in public matches. Only a few heroes have non-zero 
 
 Strong correlation between hero winrate and model weight. The model essentially learned winrate from draft data.
 
-*Next Steps*:
-Since the model has reached its ceiling with logistic regression - the next step is a deep learning model with hero embeddings and patch-aware features.
+
+
+
 
 Updates:
+
+*August 30th - Next Steps*: Before diving into a deep learning model, I would like to try out a couple of other optimizations/improvements for the current logistic regression model in the form of L1 regularization and feature-crosses. Feature crosses are learned automatically in DL, via hidden layers, so this is a bit of practice before the next step.
+
+*Next Steps*:
+Since the model has reached its ceiling with logistic regression - the next step is a deep learning model with hero embeddings and patch-aware features.
 
 *August 25-27*: After collecting 100k matches, match augmentation, Adam optimization, appending hero feature vector with winrates - the logistic regression seems to have hit its ceiling of 0.5606 accuracy. The loss is almost exactly $ln(2)$ - 0.6801 - which shows that in public Dota matches - pick rarely matters, and it's more about individual skill, than anything.
 
