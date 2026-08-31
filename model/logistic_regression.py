@@ -14,6 +14,7 @@ hard_prediction_threshold = 0.5
 momentum_parameter = 0.9
 adaptive_scaling = 0.999
 epsilon = 1e-8
+regularization = 0.0001
 epochs = 1000
 
 
@@ -31,8 +32,10 @@ def binary_cross_entropy(Y, Y_predicted, epsilon=1e-15):
     return -numpy.sum(Y * numpy.log(Y_predicted) + (1 - Y) * numpy.log(1 - Y_predicted)) / n
 
 
-def compute_gradient(X, Y, Y_predicted):
-    return X.T @ (Y_predicted - Y) / X.shape[0]
+def compute_gradient(X, Y, Y_predicted, weights):
+    gradient = X.T @ (Y_predicted - Y) / X.shape[0]
+    gradient[:156] += regularization * numpy.sign(weights[:156])
+    return gradient
 
 def momentum_update(momentum, momentum_parameter, gradient):
     return ((momentum_parameter*momentum) + (1 - momentum_parameter)*gradient)
@@ -64,7 +67,7 @@ def train(X, Y, weights, learning_rate, epochs, m, v, batch_size=128):
             t += 1
 
             Y_hat = prediction(X_batch, weights)
-            gradient = compute_gradient(X_batch, Y_batch, Y_hat)
+            gradient = compute_gradient(X_batch, Y_batch, Y_hat, weights)
 
             m = momentum_update(m, momentum_parameter, gradient)
             v = variance_update(adaptive_scaling, v, gradient)

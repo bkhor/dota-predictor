@@ -71,7 +71,7 @@ def get_match_count():
 	return count
 
 
-def run(target=100000):
+def run(target=150000):
 	init_db()
 	seq_num = get_last_seq_num() or INITIAL_SEQ_NUM
 	total = get_match_count()
